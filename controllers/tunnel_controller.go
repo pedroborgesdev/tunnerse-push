@@ -63,9 +63,7 @@ func (c *TunnelController) Register(ctx *gin.Context) {
 func (c *TunnelController) Get(ctx *gin.Context) {
 	name := utils.GetTunnelName(ctx)
 	if name == "" {
-		utils.BadRequest(ctx, []logger.LogDetail{
-			{Key: "error", Value: "tunnel name has not passed"},
-		})
+		c.tunnelService.Home(ctx.Writer)
 	}
 
 	body, err := c.tunnelService.Get(name)
@@ -98,9 +96,7 @@ func (c *TunnelController) Get(ctx *gin.Context) {
 func (c *TunnelController) Response(ctx *gin.Context) {
 	name := utils.GetTunnelName(ctx)
 	if name == "" {
-		utils.BadRequest(ctx, []logger.LogDetail{
-			{Key: "error", Value: "tunnel name has not passed"},
-		})
+		c.tunnelService.Home(ctx.Writer)
 	}
 
 	err := c.tunnelService.Response(name, ctx.Request.Body)
@@ -133,9 +129,7 @@ func (c *TunnelController) Response(ctx *gin.Context) {
 func (c *TunnelController) Tunnel(ctx *gin.Context) {
 	name := utils.GetTunnelName(ctx)
 	if name == "" {
-		utils.BadRequest(ctx, []logger.LogDetail{
-			{Key: "error", Value: "tunnel name has not passed"},
-		})
+		c.tunnelService.Home(ctx.Writer)
 	}
 
 	err := c.tunnelService.Tunnel(name, ctx.Writer, ctx.Request)
@@ -170,9 +164,7 @@ func (c *TunnelController) Tunnel(ctx *gin.Context) {
 func (c *TunnelController) Close(ctx *gin.Context) {
 	name := utils.GetTunnelName(ctx)
 	if name == "" {
-		utils.BadRequest(ctx, []logger.LogDetail{
-			{Key: "error", Value: "tunnel name has not passed"},
-		})
+		c.tunnelService.Home(ctx.Writer)
 	}
 
 	err := c.tunnelService.Close(name)

@@ -44,7 +44,7 @@ func LoadAppConfig() error {
 		WARNS_ON_HTML: getEnvBool("WARNS_ON_HTML", true),
 
 		TUNNEL_LIFE_TIME:            getEnvInt("TUNNEL_LIFE_TIME", 86400),
-		TUNNEL_INACTIVITY_LIFE_TIME: getEnvInt("TUNNEL_INACTIVITY_LIFE_TIME", 10),
+		TUNNEL_INACTIVITY_LIFE_TIME: getEnvInt("TUNNEL_INACTIVITY_LIFE_TIME", 86400),
 
 		DBHost:    getEnvStr("DBHost", "localhost"),
 		DBPort:    getEnvStr("DBPort", "27017"),

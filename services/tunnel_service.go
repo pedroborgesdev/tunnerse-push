@@ -12,23 +12,25 @@ import (
 	"sync"
 	"tunnerse/config"
 	"tunnerse/models"
+	"tunnerse/repository"
+	"tunnerse/utils"
 
 	"time"
 	"tunnerse/validation"
 )
 
 type TunnelService struct {
-	// tunnelRepo *repository.TunnelRepository
-	validator *validation.TunnelValidator
-	tunnels   map[string]*Tunnel
-	mux       sync.Mutex
+	tunnelRepo *repository.TunnelRepository
+	validator  *validation.TunnelValidator
+	tunnels    map[string]*Tunnel
+	mux        sync.Mutex
 }
 
 func NewTunnelService() *TunnelService {
 	return &TunnelService{
-		// tunnelRepo: repository.NewTunnelRepository(),
-		validator: validation.NewTunnelValidator(),
-		tunnels:   make(map[string]*Tunnel),
+		tunnelRepo: repository.NewTunnelRepository(),
+		validator:  validation.NewTunnelValidator(),
+		tunnels:    make(map[string]*Tunnel),
 	}
 }
 
@@ -50,25 +52,31 @@ func (s *TunnelService) Register(name string) (string, error) {
 		CreatedAt: time.Now(),
 	}
 
-	// exists := true
-	// for exists {
-	// 	random := utils.RandomCode(3)
-	// 	tunnel.Name = name + "-" + random
+	exists := true
+	for exists {
+		random := utils.RandomCode(3)
+		tunnel.Name = name + "-" + random
 
-	// 	tunnelModel, err := s.tunnelRepo.GetTunnelByName(tunnel.Name)
-	// 	if err != nil {
-	// 		return "", err
-	// 	}
+		tunnelModel, existsTunnel := s.tunnels[name]
+		if existsTunnel {
+			continue
+		}
 
-	// 	if tunnelModel == nil {
-	// 		exists = false
-	// 	}
-	// }
+		// allow this with use mongo db
+		// tunnelModel, err := s.tunnelRepo.GetTunnelByName(tunnel.Name)
+		// if err != nil {
+		// 	return "", err
+		// }
 
-	// err = s.tunnelRepo.Register(&tunnel)
-	// if err != nil {
-	// 	return "", err
-	// }
+		if tunnelModel == nil {
+			exists = false
+		}
+	}
+
+	err = s.tunnelRepo.Register(&tunnel)
+	if err != nil {
+		return "", err
+	}
 
 	t := &Tunnel{
 		requestCh:  make(chan *http.Request),
@@ -162,32 +170,27 @@ func (s *TunnelService) Response(name string, body io.ReadCloser) error {
 
 	defer body.Close()
 
-	// 🔹 Decodifica o JSON vindo do cliente
 	var resp models.ResponseData
 	if err := json.NewDecoder(body).Decode(&resp); err != nil {
 		return fmt.Errorf("failed to decode response JSON: %w", err)
 	}
 
-	// 🔹 Decodifica o corpo de base64
 	bodyDecoded, err := base64.StdEncoding.DecodeString(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to decode base64 body: %w", err)
 	}
 
-	// 🔹 Aguarda o writer
 	wr := <-tunnel.writerCh
 	if wr == nil {
 		return fmt.Errorf("tunnel not found")
 	}
 
-	// 🔹 Copia os headers recebidos
 	for key, values := range resp.Headers {
 		for _, value := range values {
 			wr.Header().Add(key, value)
 		}
 	}
 
-	// 🔹 Escreve o status e o corpo
 	wr.WriteHeader(resp.StatusCode)
 	_, err = wr.Write(bodyDecoded)
 	return err
@@ -213,6 +216,7 @@ func (s *TunnelService) Tunnel(name string, w http.ResponseWriter, r *http.Reque
 
 	var bodyBytes []byte
 	if r.Body != nil {
+		defer r.Body.Close()
 		bodyBytes, err = io.ReadAll(r.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read request body: %w", err)
@@ -279,6 +283,21 @@ func (s *TunnelService) Timeout(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusNotFound)
 
 	path := filepath.Join("static/timeout", "index.html")
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		http.Error(w, "404 - tunnel timeout", http.StatusNotFound)
+		return
+	}
+
+	w.Write(data)
+}
+
+func (s *TunnelService) Home(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusNotFound)
+
+	path := filepath.Join("static/home", "index.html")
 
 	data, err := os.ReadFile(path)
 	if err != nil {
