@@ -63,7 +63,14 @@ func (c *TunnelController) Register(ctx *gin.Context) {
 func (c *TunnelController) Get(ctx *gin.Context) {
 	name := utils.GetTunnelName(ctx)
 	if name == "" {
-		c.tunnelService.Home(ctx.Writer)
+		if config.AppConfig.WARNS_ON_HTML {
+			c.tunnelService.Home(ctx.Writer)
+			return
+		}
+
+		utils.Success(ctx, gin.H{
+			"message": "Tunnerse is running :)",
+		})
 	}
 
 	body, err := c.tunnelService.Get(name)
@@ -96,7 +103,14 @@ func (c *TunnelController) Get(ctx *gin.Context) {
 func (c *TunnelController) Response(ctx *gin.Context) {
 	name := utils.GetTunnelName(ctx)
 	if name == "" {
-		c.tunnelService.Home(ctx.Writer)
+		if config.AppConfig.WARNS_ON_HTML {
+			c.tunnelService.Home(ctx.Writer)
+			return
+		}
+
+		utils.Success(ctx, gin.H{
+			"message": "Tunnerse is running :)",
+		})
 	}
 
 	err := c.tunnelService.Response(name, ctx.Request.Body)
@@ -129,7 +143,14 @@ func (c *TunnelController) Response(ctx *gin.Context) {
 func (c *TunnelController) Tunnel(ctx *gin.Context) {
 	name := utils.GetTunnelName(ctx)
 	if name == "" {
-		c.tunnelService.Home(ctx.Writer)
+		if config.AppConfig.WARNS_ON_HTML {
+			c.tunnelService.Home(ctx.Writer)
+			return
+		}
+
+		utils.Success(ctx, gin.H{
+			"message": "Tunnerse is running :)",
+		})
 	}
 
 	err := c.tunnelService.Tunnel(name, ctx.Writer, ctx.Request)
@@ -164,7 +185,14 @@ func (c *TunnelController) Tunnel(ctx *gin.Context) {
 func (c *TunnelController) Close(ctx *gin.Context) {
 	name := utils.GetTunnelName(ctx)
 	if name == "" {
-		c.tunnelService.Home(ctx.Writer)
+		if config.AppConfig.WARNS_ON_HTML {
+			c.tunnelService.Home(ctx.Writer)
+			return
+		}
+
+		utils.Success(ctx, gin.H{
+			"message": "Tunnerse is running :)",
+		})
 	}
 
 	err := c.tunnelService.Close(name)
