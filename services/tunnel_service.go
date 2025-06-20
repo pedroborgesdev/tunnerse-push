@@ -12,7 +12,6 @@ import (
 	"sync"
 	"tunnerse/config"
 	"tunnerse/models"
-	"tunnerse/repository"
 	"tunnerse/utils"
 
 	"time"
@@ -20,17 +19,17 @@ import (
 )
 
 type TunnelService struct {
-	tunnelRepo *repository.TunnelRepository
-	validator  *validation.TunnelValidator
-	tunnels    map[string]*Tunnel
-	mux        sync.Mutex
+	// tunnelRepo *repository.TunnelRepository
+	validator *validation.TunnelValidator
+	tunnels   map[string]*Tunnel
+	mux       sync.Mutex
 }
 
 func NewTunnelService() *TunnelService {
 	return &TunnelService{
-		tunnelRepo: repository.NewTunnelRepository(),
-		validator:  validation.NewTunnelValidator(),
-		tunnels:    make(map[string]*Tunnel),
+		// tunnelRepo: repository.NewTunnelRepository(),
+		validator: validation.NewTunnelValidator(),
+		tunnels:   make(map[string]*Tunnel),
 	}
 }
 
@@ -73,10 +72,10 @@ func (s *TunnelService) Register(name string) (string, error) {
 		}
 	}
 
-	err = s.tunnelRepo.Register(&tunnel)
-	if err != nil {
-		return "", err
-	}
+	// err = s.tunnelRepo.Register(&tunnel)
+	// if err != nil {
+	// 	return "", err
+	// }
 
 	t := &Tunnel{
 		requestCh:  make(chan *http.Request),
