@@ -2,7 +2,6 @@ package main
 
 import (
 	"tunnerse/config"
-	"tunnerse/database"
 	"tunnerse/debug"
 	"tunnerse/logger"
 	"tunnerse/middlewares"
@@ -18,7 +17,7 @@ func main() {
 
 	config.LoadAppConfig()
 
-	database.InitDB()
+	// database.InitDB()
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
