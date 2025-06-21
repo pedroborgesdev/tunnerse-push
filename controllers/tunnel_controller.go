@@ -56,6 +56,7 @@ func (c *TunnelController) Register(ctx *gin.Context) {
 	})
 
 	logger.Log("INFO", "User registered successfully", []logger.LogDetail{
+		{Key: "subdomain", Value: config.AppConfig.SUBDOMAIN},
 		{Key: "tunnel", Value: tunnelName},
 	})
 }
@@ -142,6 +143,9 @@ func (c *TunnelController) Response(ctx *gin.Context) {
 
 func (c *TunnelController) Tunnel(ctx *gin.Context) {
 	name := utils.GetTunnelName(ctx)
+
+	path := ctx.Request.URL.Path
+
 	if name == "" {
 		if config.AppConfig.WARNS_ON_HTML {
 			c.tunnelService.Home(ctx.Writer)
@@ -151,20 +155,21 @@ func (c *TunnelController) Tunnel(ctx *gin.Context) {
 		utils.Success(ctx, gin.H{
 			"message": "Tunnerse is running :)",
 		})
+		return
 	}
 
-	err := c.tunnelService.Tunnel(name, ctx.Writer, ctx.Request)
-
+	err := c.tunnelService.Tunnel(name, path, ctx.Writer, ctx.Request)
 	if err != nil {
 		if config.AppConfig.WARNS_ON_HTML {
-			if err.Error() == "tunnel not found" {
+			switch err.Error() {
+			case "tunnel not found":
 				c.tunnelService.NotFound(ctx.Writer)
-				return
-			}
-			if err.Error() == "timeout" {
+			case "timeout":
 				c.tunnelService.Timeout(ctx.Writer)
-				return
+			default:
+				ctx.String(http.StatusInternalServerError, err.Error())
 			}
+			return
 		}
 
 		utils.BadRequest(ctx, gin.H{
@@ -177,8 +182,9 @@ func (c *TunnelController) Tunnel(ctx *gin.Context) {
 		return
 	}
 
-	logger.Log("INFO", "Mensagem has been written", []logger.LogDetail{
+	logger.Log("INFO", "Message has been written", []logger.LogDetail{
 		{Key: "tunnel", Value: name},
+		{Key: "path", Value: path},
 	})
 }
 

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"tunnerse/config"
 	"tunnerse/models"
@@ -150,7 +151,7 @@ func (s *TunnelService) Get(name string) ([]byte, error) {
 
 	sreq := models.SerializableRequest{
 		Method: req.Method,
-		URL:    req.URL.String(),
+		Path:   req.URL.String(),
 		Header: req.Header,
 		Body:   string(bodyBytes),
 	}
@@ -191,11 +192,12 @@ func (s *TunnelService) Response(name string, body io.ReadCloser) error {
 	}
 
 	wr.WriteHeader(resp.StatusCode)
+
 	_, err = wr.Write(bodyDecoded)
 	return err
 }
 
-func (s *TunnelService) Tunnel(name string, w http.ResponseWriter, r *http.Request) error {
+func (s *TunnelService) Tunnel(name, path string, w http.ResponseWriter, r *http.Request) error {
 	err := s.validator.ValidateTunnelRegister(name)
 	if err != nil {
 		return err
@@ -209,7 +211,7 @@ func (s *TunnelService) Tunnel(name string, w http.ResponseWriter, r *http.Reque
 		return fmt.Errorf("tunnel not found")
 	}
 
-	if exists && tunnel.resetTimer != nil {
+	if tunnel.resetTimer != nil {
 		tunnel.resetTimer()
 	}
 
@@ -221,12 +223,26 @@ func (s *TunnelService) Tunnel(name string, w http.ResponseWriter, r *http.Reque
 			return fmt.Errorf("failed to read request body: %w", err)
 		}
 	}
-	r.Body.Close()
 
 	r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 
 	clonedRequest := r.Clone(r.Context())
-	clonedRequest.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+	if !config.AppConfig.SUBDOMAIN {
+		pathParts := strings.SplitN(clonedRequest.URL.Path, "/", 3)
+
+		if len(pathParts) >= 3 {
+			newPath := "/" + pathParts[2]
+			clonedRequest.URL.Path = newPath
+			clonedRequest.RequestURI = newPath
+		} else {
+			clonedRequest.URL.Path = "/"
+			clonedRequest.RequestURI = "/"
+		}
+	} else {
+		clonedRequest.URL.Path = path
+		clonedRequest.RequestURI = path
+	}
 
 	select {
 	case tunnel.requestCh <- clonedRequest:

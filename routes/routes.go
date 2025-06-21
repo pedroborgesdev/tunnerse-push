@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"tunnerse/config"
 	"tunnerse/controllers"
 
 	"github.com/gin-gonic/gin"
@@ -25,9 +26,23 @@ func SetupRoutes(router *gin.Engine) {
 	// 	}),
 	// )
 
-	tunnel.POST("/register", tunnelController.Register)
-	tunnel.GET("/tunnel", tunnelController.Get)
-	tunnel.POST("/response", tunnelController.Response)
-	tunnel.POST("/close", tunnelController.Close)
-	tunnel.GET("/", tunnelController.Tunnel)
+	if config.AppConfig.SUBDOMAIN {
+		tunnel.POST("/register", tunnelController.Register)
+		tunnel.GET("/tunnel", tunnelController.Get)
+		tunnel.POST("/response", tunnelController.Response)
+		tunnel.POST("/close", tunnelController.Close)
+		tunnel.GET("/", tunnelController.Tunnel)
+
+		router.NoRoute(tunnelController.Tunnel)
+	}
+
+	if !config.AppConfig.SUBDOMAIN {
+		tunnel.POST("/register", tunnelController.Register)
+		tunnel.GET(":name/tunnel", tunnelController.Get)
+		tunnel.POST(":name/response", tunnelController.Response)
+		tunnel.POST(":name/close", tunnelController.Close)
+		tunnel.GET(":name/", tunnelController.Tunnel)
+
+		router.NoRoute(tunnelController.Tunnel)
+	}
 }

@@ -13,16 +13,9 @@ type Tunnel struct {
 	CreatedAt time.Time          `bson:"created_at"`
 }
 
-type RequestData struct {
-	Method  string              `json:"method"`
-	Path    string              `json:"path"`
-	Headers map[string][]string `json:"headers"`
-	Body    []byte              `json:"body"`
-}
-
 type SerializableRequest struct {
 	Method string      `json:"method"`
-	URL    string      `json:"url"`
+	Path   string      `json:"path"`
 	Header http.Header `json:"header"`
 	Body   string      `json:"body"`
 }
